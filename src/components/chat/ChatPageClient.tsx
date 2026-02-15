@@ -17,15 +17,12 @@ export function ChatPageClient({ profile }: ChatPageClientProps) {
 
   useEffect(() => {
     setMounted(true);
-    // Prevent body scroll on chat page
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
+    // Scroll to top when component mounts
+    window.scrollTo(0, 0);
   }, []);
 
   return (
-    <div className="fixed inset-0 flex overflow-hidden">
+    <div className="flex h-screen overflow-hidden">
       {/* Desktop Sidebar */}
       <div className="hidden w-80 shrink-0 md:block">
         <Sidebar profile={profile} />
