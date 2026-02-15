@@ -19,6 +19,14 @@ export function ChatPageClient({ profile }: ChatPageClientProps) {
     setMounted(true);
     // Scroll to top when component mounts
     window.scrollTo(0, 0);
+
+    // Disable body scroll for chat page only
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      // Re-enable body scroll when leaving chat page
+      document.body.style.overflow = '';
+    };
   }, []);
 
   return (
