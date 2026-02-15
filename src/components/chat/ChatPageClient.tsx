@@ -22,7 +22,7 @@ export function ChatPageClient({ profile }: ChatPageClientProps) {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-full overflow-hidden">
       {/* Desktop Sidebar */}
       <div className="hidden w-80 shrink-0 md:block">
         <Sidebar profile={profile} />
