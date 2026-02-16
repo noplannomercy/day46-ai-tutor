@@ -1,0 +1,652 @@
+{
+  "name": "AI Tutor Phase3 - Data Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Tool to Add a File to Vector DB",
+        "height": 547,
+        "width": 2641,
+        "color": 5
+      },
+      "id": "92a67d3e-4630-4d43-a03b-64b5456e3814",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3328,
+        1792
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://69.62.77.191:5001/v1/chunk/hybrid/file/async",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "file"
+            },
+            {
+              "name": "options",
+              "value": "{\"to_formats\": [\"md\"], \"table_mode\": \"fast\", \"image_export_mode\": \"placeholder\"}"
+            },
+            {
+              "name": "chunker_options",
+              "value": "{\"tokenizer\": \"sentence-transformers/all-MiniLM-L6-v2\", \"max_tokens\": 512, \"merge_peers\": true, \"use_markdown_tables\": false}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3520,
+        1920
+      ],
+      "id": "39c92479-0db6-40d1-b8d8-0524c33c9eef",
+      "name": "Docling Chunk With Hybridchunker",
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "=http://69.62.77.191:5001/v1/status/poll/{{ $json.task_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3920,
+        1904
+      ],
+      "id": "b95904ec-92b5-4a3d-ac56-dd6b301ab3e8",
+      "name": "status check",
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ba85be1c-a309-4c1f-bffa-6c099b0729bc",
+              "leftValue": "={{ $json.task_status }}",
+              "rightValue": "success",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4320,
+        1888
+      ],
+      "id": "1935fc22-4b5f-432d-a336-6b0c254418b9",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "=http://69.62.77.191:5001/v1/result/{{ $json.task_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4528,
+        1872
+      ],
+      "id": "637b604a-0865-4efb-bc25-9101a00e2aaa",
+      "name": "get result",
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "formTitle": "docling",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "file",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        3024,
+        1920
+      ],
+      "id": "5b445ba1-ffc0-4977-a112-7c235abb07b0",
+      "name": "On form submission2",
+      "webhookId": "7c6811db-623d-4fe2-9b74-554793bf59cb"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst doclingChunks = response.chunks;\nconst firstChunk = doclingChunks[0];\n\nconst fileName = firstChunk.filename || 'Unknown File';\nconst fileId = `${fileName}_${Date.now()}`;\nconst mimeType = firstChunk.metadata?.origin?.mimetype || 'unknown';\n\n// 총 토큰 수 계산\nconst totalTokens = doclingChunks.reduce((sum, chunk) => sum + (chunk.num_tokens || 0), 0);\n\nreturn {\n  file_id: fileId,\n  title: fileName,\n  mimetype: mimeType,\n  total_chunks: doclingChunks.length,\n  total_tokens: totalTokens,\n  created_at: new Date().toISOString(),\n  chunks: doclingChunks\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4736,
+        1856
+      ],
+      "id": "fca6568e-c122-401c-bcdb-a95197eb4651",
+      "name": "Extract File Info"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "document_metadata",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.file_id }}",
+            "title": "={{ $json.title }}",
+            "created_at": "={{ $json.created_at }}",
+            "total_chunks": "={{ $json.total_chunks }}",
+            "total_tokens": "={{ $json.total_tokens }}",
+            "mimetype": "={{ $json.mimetype }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mimetype",
+              "displayName": "mimetype",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "total_chunks",
+              "displayName": "total_chunks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "total_tokens",
+              "displayName": "total_tokens",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        4960,
+        1856
+      ],
+      "id": "e9187268-86cf-4b05-b43a-edd1b1077676",
+      "name": "Insert Document Metadata",
+      "credentials": {
+        "postgres": {
+          "id": "uN9QWmdYp4HSiR7V",
+          "name": "AITUTOR Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const extractedData = $('Extract File Info').first().json;\nconst fileId = extractedData.file_id;\nconst chunks = extractedData.chunks;\n\nconst items = chunks.map((chunk) => {\n  return {\n    json: {\n      file_id: fileId,\n      chunk_index: chunk.chunk_index,\n      content: chunk.text,\n      metadata: {\n        file_id: fileId,\n        chunk_index: chunk.chunk_index,\n        num_tokens: chunk.num_tokens,\n        headings: chunk.headings\n      }\n    }\n  };\n});\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5152,
+        1856
+      ],
+      "id": "9538f19b-f35f-4d52-b33a-fd6416b14ee7",
+      "name": "Process Docling Result"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "content": "={{ $('Process Docling Result').item.json.content }}",
+            "embedding": "={{ $json.data[0].embedding }}",
+            "metadata": "={{ JSON.stringify($('Process Docling Result').item.json.metadata) }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "metadata",
+              "displayName": "metadata",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "embedding",
+              "displayName": "embedding",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        5568,
+        1840
+      ],
+      "id": "a1ecc40e-9b78-49c8-9bd6-29fa8cea4213",
+      "name": "Insert to PGVector",
+      "retryOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "uN9QWmdYp4HSiR7V",
+          "name": "AITUTOR Postgres account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/embeddings",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "text-embedding-ada-002"
+            },
+            {
+              "name": "input",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        5344,
+        1856
+      ],
+      "id": "264c3a05-86c1-4757-a54d-281286688512",
+      "name": "embedding",
+      "retryOnFail": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "FHruXiW3PJfYtsIQ",
+          "name": "OpenAi account"
+        },
+        "httpHeaderAuth": {
+          "id": "LzOi7yYjvzVfZF1Z",
+          "name": "Header Auth account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "errorMessage": "API Call Failed!!"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        3696,
+        2160
+      ],
+      "id": "bdbf8b62-4ea2-45ce-8cbd-94e6c78d736e",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Docling 결과 조회 실패"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        4720,
+        2144
+      ],
+      "id": "19e934ed-675f-4371-83fa-d5fa663a4984",
+      "name": "Stop and Error1"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Docling 상태 조회 실패"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        4272,
+        2144
+      ],
+      "id": "74a71629-0ae3-401b-8fb5-eb97b2ef0080",
+      "name": "Stop and Error2"
+    },
+    {
+      "parameters": {
+        "errorMessage": "OpenAI 임베딩 실패"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        5520,
+        2144
+      ],
+      "id": "64e2df27-fdd7-4336-aeaa-dccc63bb00ac",
+      "name": "Stop and Error3"
+    },
+    {
+      "parameters": {
+        "errorMessage": "PGVector 저장 실패"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        5776,
+        2144
+      ],
+      "id": "8ec107ee-3621-43cb-831b-b796848bab71",
+      "name": "Stop and Error4"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        4112,
+        1888
+      ],
+      "id": "6c883e1b-7734-44e9-a0ef-5706c077a2c3",
+      "name": "Wait1",
+      "webhookId": "66311b9c-8f77-4444-9c61-5192bd423bfa"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Docling Chunk With Hybridchunker": {
+      "main": [
+        [
+          {
+            "node": "status check",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "status check": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop and Error2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "get result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "status check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get result": {
+      "main": [
+        [
+          {
+            "node": "Extract File Info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop and Error1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission2": {
+      "main": [
+        [
+          {
+            "node": "Docling Chunk With Hybridchunker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract File Info": {
+      "main": [
+        [
+          {
+            "node": "Insert Document Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Document Metadata": {
+      "main": [
+        [
+          {
+            "node": "Process Docling Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Docling Result": {
+      "main": [
+        [
+          {
+            "node": "embedding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert to PGVector": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Stop and Error4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "embedding": {
+      "main": [
+        [
+          {
+            "node": "Insert to PGVector",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop and Error3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a0232eca-c55c-4be6-bb04-c36abecfe7ae",
+  "meta": {
+    "instanceId": "f25b64f8e08bc6b0af3e5071d97899510fcb40c11931589423f85ff4c37333c1"
+  },
+  "id": "piYQ81HKTJONZIuj",
+  "tags": []
+}

@@ -1,0 +1,1144 @@
+{
+  "name": "AI Tutor Phase3",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "id": "f5891c55-f2f2-4ad7-9b8a-890253da7dc6",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        4416,
+        1120
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "FHruXiW3PJfYtsIQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Agent Tools for RAG",
+        "height": 465,
+        "width": 967,
+        "color": 4
+      },
+      "id": "58c3e9fc-db57-4e8a-adb9-5fee33e1917c",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3328,
+        1296
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## RAG AI Agent with Chat Interface",
+        "height": 817,
+        "width": 2908
+      },
+      "id": "66e00ff3-c701-4420-af31-609a04d38d39",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3024,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "1911a910-16d6-486c-afc9-b10c23bc9358",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        4992,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "6350e749-78cb-4a00-890d-cfa59faafac8",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1abc4356-6798-4a69-b63f-c134a79a7743",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        3104,
+        880
+      ],
+      "webhookId": "6350e749-78cb-4a00-890d-cfa59faafac8"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Webhook').item.json.body.message }}",
+        "options": {
+          "systemMessage": "=당신은 한국 중고등학생을 위한 AI 수학 튜터입니다.\n\n## 사용자 정보 (기억)\n{{ $('Mem0 Search').item.json.results.map(r => '- ' + r.memory).join('\\n') }}\n\n위 기억에 나온 학생의 구체적인 약점과 반복 실수를 반드시 명시적으로 언급하고,\n이 문제의 어떤 계산 단계에서 해당 실수가 발생할 수 있는지 구체적으로 경고하라.\n기억이 없으면 일반적으로 답하라.\n\n## 관련 문제은행 레퍼런스 (자동 검색 결과)\n{{ $('Aggregate').item.json.document.map(d => d.pageContent).join('\\n---\\n') }}\n위 레퍼런스에서 유사한 문제를 연습문제로 추천하라. 문제 코드(QE-001 등)를 반드시 포함하라.\n\n## 사용 가능한 도구\n1. **wolfram_calculator** - 수학 계산 검증 (모든 풀이에서 반드시 사용)\n2. **Supabase Vector Store** - 문제은행에서 추가 검색이 필요할 때 사용\n3. **List Documents** - 문제은행 목록 확인\n4. **Get File Contents** - 특정 문제의 상세 내용 가져오기\n5. **List Tables Get Table Schema** - 테이블 구조 확인\n6. **Execute SQL** - 문제 데이터 조회 (SELECT만 가능)\n\n## 필수 규칙\n⚠️ 1. 풀이 완료 후 반드시 wolfram_calculator로 최종답을 검증하라. 결과가 다르면 즉시 수정.\n⚠️ 2. 연습문제 추천 시 반드시 위 문제은행 레퍼런스에서 선택하라. 직접 만들지 마라.\n⚠️ 3. 답을 찾지 못하면 솔직하게 말하라. 절대 지어내지 마라.\n\n## 출력 형식 (반드시 지켜라)\n1) 최종답: (짧게)\n2) 풀이 단계(4단계 고정):\n   - 1단계(전략 선택): ...\n   - 2단계(핵심 아이디어): ...\n   - 3단계(계산 전개): ...\n   - 4단계(검산 및 정리): ...\n3) 체크포인트 질문(2개):\n4) 실수 방지 주의사항(학생 약점 기반, 구체적으로):\n5) 연습문제 추천(2개, 문제은행 레퍼런스에서 선택, 문제 코드 포함):\n\n한국어로 답변하세요."
+        }
+      },
+      "id": "e95f959f-6e60-4ede-bdd9-35a10ea7fc26",
+      "name": "RAG AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        4640,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "문제은행 목록을 조회합니다. 문제 코드, 과목, 토픽, 난이도, 정답 정보를 확인할 수 있습니다.",
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "document_metadata",
+          "mode": "list",
+          "cachedResultName": "document_metadata"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        4704,
+        1120
+      ],
+      "id": "6057a017-9466-49b4-8dd4-691efe77279a",
+      "name": "List Documents",
+      "credentials": {
+        "postgres": {
+          "id": "uN9QWmdYp4HSiR7V",
+          "name": "AITUTOR Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "특정 문제의 전체 풀이 해설 텍스트를 가져옵니다. file_id를 입력하세요.",
+        "operation": "executeQuery",
+        "query": "SELECT \n    string_agg(content, ' ') as document_text\nFROM documents\nWHERE metadata->>'file_id' LIKE $1 || '%'\nGROUP BY metadata->>'file_id';",
+        "options": {
+          "queryReplacement": "={{ $fromAI('file_id') }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        4848,
+        1120
+      ],
+      "id": "362e182a-a326-4071-8215-4a8c5e5cd915",
+      "name": "Get File Contents",
+      "credentials": {
+        "postgres": {
+          "id": "uN9QWmdYp4HSiR7V",
+          "name": "AITUTOR Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "당신은 문서 기반 질문에 답변하는 AI 어시스턴트입니다.\n\n## 사용 가능한 도구\n1. **RAG 검색** (documents 테이블) - 문서 내용 의미 검색\n2. **문서 목록 조회** (document_metadata 테이블) - 어떤 문서들이 있는지 확인\n3. **문서 전체 텍스트 추출** - 특정 문서의 전체 내용 가져오기\n4. **SQL 쿼리** (document_rows 테이블) - CSV/Excel 등 표 형식 데이터 조회\n\n## 응답 전략\n1. **일반 질문** → RAG 검색부터 시작\n2. **수치/집계 질문** (합계, 최대값 등) → SQL 쿼리 사용\n3. **RAG로 답 못 찾으면** → document_metadata에서 관련 문서 찾아서 전체 분석\n4. **그래도 못 찾으면** → 솔직하게 \"찾을 수 없습니다\" 답변\n\n## 주의사항\n- 답을 모르면 절대 지어내지 마세요\n- 출처 문서명을 함께 알려주세요\n- 한국어로 친절하게 답변하세요",
+        "height": 400,
+        "width": 480
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        5952,
+        464
+      ],
+      "typeVersion": 1,
+      "id": "21e32a22-f4c5-46d2-81b0-de108833b2b5",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "문제은행 데이터를 SQL로 조회합니다. SELECT만 가능. 예: 특정 토픽/난이도 문제 필터링.",
+        "operation": "executeQuery",
+        "query": "{{ $fromAI('sql_query') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        5008,
+        1120
+      ],
+      "id": "8818a577-483f-4c3f-9db6-4c96ecb72ac9",
+      "name": "Execute SQL",
+      "credentials": {
+        "postgres": {
+          "id": "uN9QWmdYp4HSiR7V",
+          "name": "AITUTOR Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "데이터베이스의 테이블 목록을 조회합니다. SQL 질문을 받으면 항상 이 도구를 먼저 사용하세요.",
+        "operation": "executeQuery",
+        "query": "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        5120,
+        1120
+      ],
+      "id": "85800e5a-23f3-4651-84e1-61b0e024267c",
+      "name": "List Tables",
+      "credentials": {
+        "postgres": {
+          "id": "uN9QWmdYp4HSiR7V",
+          "name": "AITUTOR Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "특정 테이블의 컬럼 정보와 샘플 데이터를 조회합니다. SQL 쿼리 작성 전에 테이블 구조를 확인할 때 사용하세요.",
+        "operation": "executeQuery",
+        "query": "SELECT column_name, data_type, is_nullable \nFROM information_schema.columns \nWHERE table_name = $1\nORDER BY ordinal_position;",
+        "options": {
+          "queryReplacement": "={{ $fromAI('Query_Parameters', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        5248,
+        1120
+      ],
+      "id": "72de65a4-63c3-4b1b-98ac-7c03570ae51a",
+      "name": "Get Table Schema",
+      "credentials": {
+        "postgres": {
+          "id": "uN9QWmdYp4HSiR7V",
+          "name": "AITUTOR Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://193.168.195.222:8888/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"{{ $('Webhook').first().json.body.message }}\",\n  \"user_id\": \"{{ $('Webhook').first().json.body.user_id }}\",\n  \"limit\": 5\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3856,
+        896
+      ],
+      "id": "35970400-40a9-42d6-8e8b-e79da1ad2df1",
+      "name": "Mem0 Search"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://193.168.195.222:8888/memories",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($('Memory Summary').item.json.output.summary) }}\n    }\n  ],\n  \"user_id\": \"{{ $('Webhook').item.json.body.user_id }}\",\n  \"agent_id\": \"lqpagent\",\n  \"run_id\": \"pocmem0001\",\n  \"infer\": false,\n  \"metadata\": {\n    \"source\": \"n8n\",\n    \"memory_type\": \"{{ $('Evaluate').item.json.output.memory_type }}\",\n    \"confidence\": {{ $('Evaluate').item.json.output.confidence }},\n    \"eval_reason\": {{ JSON.stringify($('Evaluate').item.json.output.reason) }},\n    \"origin\": \"conversation_summary\",\n    \"decision\": {{ JSON.stringify($('Memory Summary').item.json.output.decision || '') }},\n    \"relations\": {{ JSON.stringify($('Memory Summary').item.json.output.relations || []) }},\n    \"timestamp\": \"{{ $now.toISO() }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        6336,
+        880
+      ],
+      "id": "59fa4736-78b8-4271-9b35-2cd2f3fad12d",
+      "name": "Mem0 Add",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=사용자: {{ $('Webhook').item.json.body.message }}\nAI 응답: {{ $if($('RAG AI Agent').isExecuted, $('RAG AI Agent').item.json.output, $('Assignment Agent').item.json.output) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=너는 AI 수학 튜터의 학습 기억 엔진이다.\n학생의 풀이 과정과 AI 응답을 보고, 재사용 가능한 학습 기억만 추출하라.\n\n⚠️ 핵심: 추상적으로 쓰지 마라. 반드시 구체적으로 써라.\n\n[좋은 예시 - 구체적]\n- \"판별식 D = b²-4ac에서 c가 음수일 때 -4ac 부호를 자주 틀림. -4(1)(-3)을 -12로 계산하는 실수 반복\"\n- \"근의 공식 선호. 인수분해 가능한 문제도 근의 공식으로 풀려는 경향\"\n- \"검산 단계를 건너뜀. 해를 원래 방정식에 대입하는 습관 없음\"\n\n[나쁜 예시 - 추상적]\n- \"부호 실수가 있음\"\n- \"계산 실수 주의 필요\"\n- \"검산 부족\"\n\n[추출 항목]\n1. 어떤 개념/공식에서 실수하는가 (구체적 공식명)\n2. 실수의 정확한 패턴 (어떤 값을 어떻게 틀리는가)\n3. 학생의 풀이 전략 선호 (인수분해 vs 근의공식 등)\n4. 누락하는 단계 (검산, 조건 확인 등)\n\n[저장 금지]\n- 문제 풀이 과정 자체 (정답/풀이 내용)\n- AI 튜터의 설명/제안 내용\n- AI가 사용한 도구 (Wolfram 등)\n- 단순 정답/오답 여부만\n- 특정 문제의 계수 예시 (a=2, b=5 같은 것)\n\n⚠️ 절대 규칙:\n- 반드시 JSON만 출력하라. 설명, 마크다운, 코드블록 금지.\n- 저장할 내용이 없으면 반드시 이 JSON을 그대로 반환하라:\n{\"summary\": \"\", \"decision\": \"\", \"relations\": []}\n\n출력 형식:\n{\n  \"summary\": \"구체적 약점 요약 (공식명+실수패턴+예시 포함) 또는 빈 문자열\",\n  \"decision\": \"핵심 약점 패턴\",\n  \"relations\": [\"관계 요약\"]\n}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        5456,
+        896
+      ],
+      "id": "1717c244-3fe4-496d-99fe-0233055c7135",
+      "name": "Memory Summary"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        5776,
+        1120
+      ],
+      "id": "1857814c-d4eb-4bed-968f-3d86788c6ce9",
+      "name": "OpenRouter Chat Model2",
+      "credentials": {
+        "openRouterApi": {
+          "id": "Nq4FSDBiMwYkReDF",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"store\": true,\n  \"memory_type\": \"state | decision | rule | context | ephemeral\",\n  \"confidence\": 0.0,\n  \"reason\": \"한 문장 설명\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        5936,
+        1120
+      ],
+      "id": "d5c5b66e-4b62-411e-9ede-fbfa66502bb8",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"summary\": \"요약 문장\",\n  \"decision\": \"있으면 핵심 결정\",\n  \"relations\": [\"있으면 관계 요약\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        5584,
+        1120
+      ],
+      "id": "c66f767d-703d-463b-a3fc-e8d7fb21a12e",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=사용자 원본: {{ $('Webhook').item.json.body.message }}\n\n요약 결과: {{ JSON.stringify($('Memory Summary').item.json.output) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=너는 AI 수학 튜터의 학습 기억 저장 판별기이다.\n학생의 풀이 과정과 요약 내용을 보고,\n\"다음 수업에서 이 학생에게 도움이 될 정보인지\"를 판단하라.\n\n## 저장 판단 기준\n\n### A. 반드시 저장 (store: true)\n- 학생의 반복 실수 패턴 (부호 오류, 대입 실수 등)\n- 학생이 어려워하는 개념/단원\n- 학생의 풀이 전략 선호 (인수분해 vs 근의공식)\n- 학생의 약점 변화 (개선 or 악화)\n\n### B. 저장 금지 (store: false)\n- summary가 빈 문자열\n- 문제의 풀이 과정 자체\n- AI 튜터의 설명/제안 내용\n- AI가 사용한 도구 정보 (Wolfram 사용 등)\n- 특정 문제의 계수 값 (a=2, b=5 같은 것)\n- 한 번만 발생한 단순 계산 실수\n\n## confidence 기준\n- 0.9+: 2회 이상 반복된 실수 패턴\n- 0.7~0.9: 명확한 약점이지만 첫 발견\n- 0.5~0.7: 약점인지 불확실\n- 0.5 미만: 저장 불필요\n\n⚠️ 절대 규칙:\n- 반드시 JSON만 출력하라. 설명, 마크다운, 코드블록 금지.\n- 저장하지 않을 경우 반드시 이 JSON을 그대로 반환하라:\n{\"store\": false, \"memory_type\": \"ephemeral\", \"confidence\": 0.0, \"reason\": \"저장할 학습 패턴 없음\"}\n\n## 출력 형식\n{\n  \"store\": true | false,\n  \"memory_type\": \"weakness | pattern | preference | improvement | ephemeral\",\n  \"confidence\": 0.0 ~ 1.0,\n  \"reason\": \"한 문장 설명\"\n}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        5792,
+        896
+      ],
+      "id": "32d043ea-0291-4458-b64e-914227efc7fa",
+      "name": "Evaluate"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        5408,
+        1120
+      ],
+      "id": "6825e2de-b2f7-4a82-b581-fb5963411eb9",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "Nq4FSDBiMwYkReDF",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6d063698-76f8-49a1-980e-0b552e988643",
+              "leftValue": "={{ $json.output.store }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "9099fae6-6cab-47d7-ad52-873f52a1e39b",
+              "leftValue": "={{ $json.output.confidence }}",
+              "rightValue": 0.7,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        6096,
+        896
+      ],
+      "id": "f59ce1e4-7a9d-49ae-980e-deb615c741ea",
+      "name": "If1"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolWolframAlpha",
+      "typeVersion": 1,
+      "position": [
+        4608,
+        1408
+      ],
+      "id": "57243892-0d3e-4dc7-9e95-c3d325dd1107",
+      "name": "wolfram_calculator",
+      "credentials": {
+        "wolframAlphaApi": {
+          "id": "M3PVRsaoQRl9BepY",
+          "name": "WolframAlphaApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Run Each Node Once to Set Up Database Tables",
+        "height": 508,
+        "width": 680,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2336,
+        768
+      ],
+      "typeVersion": 1,
+      "id": "abb652c9-1a2b-4d8e-a2f0-2638cef88fa5",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- 0) pgvector 활성화\ncreate extension if not exists vector;\n\n-- 1) 문제 임베딩 테이블\ncreate table if not exists documents (\n  id bigserial primary key,\n  content text,\n  metadata jsonb,\n  embedding vector(1536)\n);\n\n-- 2) 유사 문제 검색 함수\ncreate or replace function match_documents (\n  query_embedding vector(1536),\n  match_count int default null,\n  filter jsonb DEFAULT '{}'\n) returns table (\n  id bigint,\n  content text,\n  metadata jsonb,\n  similarity float\n)\nlanguage plpgsql\nas $$\n#variable_conflict use_column\nbegin\n  return query\n  select\n    id,\n    content,\n    metadata,\n    1 - (documents.embedding <=> query_embedding) as similarity\n  from documents\n  where metadata @> filter\n  order by documents.embedding <=> query_embedding\n  limit match_count;\nend;\n$$;\n\n-- 3) 문제 메타정보\ncreate table if not exists document_metadata (\n  id text primary key,\n  title text,\n  url text,\n  created_at timestamp default now(),\n  schema text,\n  problem_code text,\n  subject text default 'math',\n  topic text,\n  difficulty text,\n  answer_text text\n);\n\n-- 4) document_rows (Tool 호환용)\ncreate table if not exists document_rows (\n  id serial primary key,\n  dataset_id text references document_metadata(id),\n  row_data jsonb\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2560,
+        976
+      ],
+      "id": "9f49f32e-124d-4eb9-bbc6-e3757968ee3a",
+      "name": "Create Documents Table and Match Function",
+      "credentials": {
+        "postgres": {
+          "id": "QoBh8rnYcTKiyMKF",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Search math problem bank for similar practice problems. MUST be called when recommending exercises to students.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "topK": 2,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        4064,
+        1408
+      ],
+      "id": "bc9bcde7-783f-47f3-be55-5baa869fcc4f",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "IRXs1bJdW31d4V7Q",
+          "name": "AITUTOR Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-ada-002",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3808,
+        1568
+      ],
+      "id": "516fa916-01b4-4a91-be1b-2841518080cf",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "FHruXiW3PJfYtsIQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-ada-002",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        4016,
+        1120
+      ],
+      "id": "08cf7e68-93f3-4902-a4c7-408795f50418",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "FHruXiW3PJfYtsIQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "prompt": "={{ $('Webhook').item.json.body.message }}",
+        "topK": 2,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        4080,
+        896
+      ],
+      "id": "5b3b5a92-0f03-4ddf-9e07-ab5d103abaf7",
+      "name": "Vector Search",
+      "credentials": {
+        "supabaseApi": {
+          "id": "IRXs1bJdW31d4V7Q",
+          "name": "AITUTOR Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "document"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        4432,
+        896
+      ],
+      "id": "15de2564-d7e4-4edc-974b-b7e1c5ce9437",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.user_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        4752,
+        1408
+      ],
+      "id": "c305b398-cc35-442e-a486-901b30f86112",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "uN9QWmdYp4HSiR7V",
+          "name": "AITUTOR Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT a.id as assignment_id, a.exam_content, s.id as submission_id\nFROM student_submissions s\nJOIN teacher_assignments a ON s.assignment_id = a.id\nWHERE s.student_id = '{{ $('Webhook').first().json.body.user_id }}'\nAND s.status = 'pending'\nAND a.status = 'active'\nORDER BY a.created_at DESC\nLIMIT 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3328,
+        880
+      ],
+      "id": "66b83ff4-4533-4c53-add5-874f0c12da71",
+      "name": "Check Assignment",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "uN9QWmdYp4HSiR7V",
+          "name": "AITUTOR Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e7fdfb7c-1722-41e3-98b7-ef75b5ead899",
+              "leftValue": "={{ $('Check Assignment').first().json.assignment_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3536,
+        880
+      ],
+      "id": "69c58cee-06c0-4166-8397-a5de07a69755",
+      "name": "Has Assignment?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const mem0 = $('Assignment Mem0 Search').first().json;\nconst assignment = $('Check Assignment').first().json;\nconst userMessage = $('Webhook').first().json.body.message;\n\nreturn [{\n  json: {\n    mem0: JSON.stringify(mem0),\n    exam_content: assignment.exam_content,\n    assignment_id: assignment.assignment_id,\n    submission_id: assignment.submission_id,\n    user_message: userMessage\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4064,
+        560
+      ],
+      "id": "b2f15ca6-d4d3-4eb6-9cd3-6bf2b55943d4",
+      "name": "Assignment Merge"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://193.168.195.222:8888/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"학생 학습 상태 약점 강점\",\n  \"user_id\": \"{{ $('Webhook').first().json.body.user_id }}\",\n  \"limit\": 10\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3856,
+        560
+      ],
+      "id": "6b4f1491-5be8-4642-8235-77334750204e",
+      "name": "Assignment Mem0 Search"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "id": "a4192515-7947-4733-927c-05148098c2d0",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        4432,
+        736
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "FHruXiW3PJfYtsIQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.user_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        4640,
+        736
+      ],
+      "id": "8f0e8555-4aec-4f11-bc65-48121d76a7ac",
+      "name": "Postgres Chat Memory1",
+      "credentials": {
+        "postgres": {
+          "id": "uN9QWmdYp4HSiR7V",
+          "name": "AITUTOR Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Webhook').item.json.body.message }}",
+        "options": {
+          "systemMessage": "=너는 고등학교 수학 과제 감독관이야. 학생이 스스로 문제를 풀도록 돕는 역할이야.\n\n## 절대 규칙 (위반 금지)\n- 정답(숫자, x값, 최종 답)을 절대 말하지 마.\n- 전체 풀이 과정을 절대 보여주지 마.\n- 한 번에 한 단계 힌트만 제공해.\n- \"모르겠어\", \"못 풀겠어\"에도 풀이를 제공하지 마. 더 쉬운 힌트를 줘.\n\n## 허용되는 것\n- \"이 문제는 인수분해로 풀 수 있어\" (방법 제시)\n- \"곱이 -10이고 합이 3인 두 수를 찾아봐\" (한 단계 힌트)\n- \"판별식 공식이 뭐였지?\" (개념 질문으로 유도)\n- 학생이 답을 말하면 맞았는지/틀렸는지만 알려주기\n\n## 금지되는 것 (예시)\n- \"x = -5, x = 2가 정답이야\" ← 절대 금지\n- \"3x + 10 = 2x + 20, x = 10\" ← 풀이 과정 금지\n- 4단계 풀이 전체를 보여주는 것 ← 금지\n\n## 힌트 단계\n1단계: 풀이 방법만 제시 (\"인수분해 해볼까?\")\n2단계: 구체적 방향 (\"두 수의 곱이 -10이 되는 조합을 찾아봐\")\n3단계: 더 구체적 (\"양수와 음수 조합을 생각해봐. 5와 ?\")\n4단계 이상: 학생이 명확히 포기 선언 시에만 풀이 제공\n\n## 학생 Mem0 데이터\n{{ $json.mem0 }}\n\n## 선생님이 내준 과제\n{{ $json.exam_content }}\n\n## 진행 방식\n- 첫 메시지면: \"선생님이 과제를 내줬어! 같이 풀어보자 😊\" + 문제 1번 제시\n- 학생 답변 → 맞으면 칭찬 + 다음 문제 / 틀리면 어디가 틀렸는지 힌트\n- 절대 한 번에 여러 단계를 보여주지 마\n\n## 수식 표기\nLaTeX 수식은 $...$ (인라인) 또는 $$...$$ (블록) 형식."
+        }
+      },
+      "id": "40944284-3f35-4c69-b338-82368a06880f",
+      "name": "Assignment Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        4640,
+        560
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check Assignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Documents": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get File Contents": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute SQL": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Tables": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Table Schema": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mem0 Search": {
+      "main": [
+        [
+          {
+            "node": "Vector Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory Summary": {
+      "main": [
+        [
+          {
+            "node": "Evaluate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Evaluate",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Evaluate",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Memory Summary",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Memory Summary",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Mem0 Add",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "Memory Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "wolfram_calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Documents Table and Match Function": {
+      "main": [
+        []
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Vector Search",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Search": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Assignment": {
+      "main": [
+        [
+          {
+            "node": "Has Assignment?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Assignment?": {
+      "main": [
+        [
+          {
+            "node": "Assignment Mem0 Search",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mem0 Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assignment Mem0 Search": {
+      "main": [
+        [
+          {
+            "node": "Assignment Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assignment Merge": {
+      "main": [
+        [
+          {
+            "node": "Assignment Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Assignment Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "Assignment Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assignment Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "52754da4-ca08-49f3-ab84-79490a6790ea",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f25b64f8e08bc6b0af3e5071d97899510fcb40c11931589423f85ff4c37333c1"
+  },
+  "id": "coYBpkDFV8739J8I",
+  "tags": []
+}
