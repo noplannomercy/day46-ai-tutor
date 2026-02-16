@@ -71,3 +71,66 @@ export interface ChatContextType {
   loading: boolean;
   sendMessage: (content: string) => Promise<void>;
 }
+
+// Assignment types
+export interface TeacherAssignment {
+  id: number;
+  teacher_id: string;
+  exam_id: number | null;
+  exam_content: string;
+  student_ids: string[];
+  status: 'active' | 'closed';
+  due_date: string | null;
+  created_at: string;
+}
+
+export interface StudentSubmission {
+  id: number;
+  assignment_id: number;
+  student_id: string;
+  answers: StudentAnswer[];
+  score: number | null;
+  grading_result: string | null;
+  status: 'pending' | 'submitted' | 'graded';
+  submitted_at: string | null;
+  graded_at: string | null;
+  created_at: string;
+}
+
+export interface StudentAnswer {
+  problem_num: number;
+  answer: string;
+}
+
+export interface PendingAssignment {
+  id: number;
+  assignment_id: number;
+  status: 'pending' | 'submitted' | 'graded';
+  teacher_assignments: TeacherAssignment;
+}
+
+// Parsed exam content
+export interface ParsedExam {
+  problems: string[];
+  answers: string[];
+  problemCount: number;
+}
+
+// Grading API request
+export interface GradingProblem {
+  id: string;
+  question: string;
+  correct_answer: string;
+  student_answer: string;
+}
+
+export interface GradingRequest {
+  teacher_id: string;
+  student_id: string;
+  problems: GradingProblem[];
+}
+
+// Grading API response (same format as n8n - array)
+export type GradingResponse = Array<{
+  output: string;
+}>;

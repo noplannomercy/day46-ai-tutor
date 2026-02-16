@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { StudentProfile } from '@/lib/types';
+import { StudentProfile, PendingAssignment } from '@/lib/types';
 import { Sidebar } from './Sidebar';
 import { ChatArea } from './ChatArea';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -10,9 +10,10 @@ import { Menu } from 'lucide-react';
 
 interface ChatPageClientProps {
   profile: StudentProfile;
+  assignment: PendingAssignment | null;
 }
 
-export function ChatPageClient({ profile }: ChatPageClientProps) {
+export function ChatPageClient({ profile, assignment }: ChatPageClientProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -58,7 +59,11 @@ export function ChatPageClient({ profile }: ChatPageClientProps) {
 
       {/* Chat Area */}
       <div className="flex-1">
-        <ChatArea studentName={profile.display_name} />
+        <ChatArea
+          studentName={profile.display_name}
+          studentId={profile.user_id}
+          assignment={assignment}
+        />
       </div>
     </div>
   );

@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getStudentProfile } from '@/lib/api/supabase';
+import {
+  getStudentProfile,
+  getPendingAssignment,
+} from '@/lib/api/supabase';
 import { ChatPageClient } from '@/components/chat/ChatPageClient';
 
 export default async function ChatPage() {
@@ -23,5 +26,8 @@ export default async function ChatPage() {
     );
   }
 
-  return <ChatPageClient profile={profile} />;
+  // Get pending assignment
+  const assignment = await getPendingAssignment(session.user.id);
+
+  return <ChatPageClient profile={profile} assignment={assignment} />;
 }
